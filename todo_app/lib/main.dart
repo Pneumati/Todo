@@ -13,7 +13,10 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Todo App',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        primarySwatch: Colors.orange, // Change primary color to goldish sundown
+        primaryColor: Color(0xFFFFA726), // Goldish sundown color
+        accentColor: Color(0xFFFF7043), // Additional accent color
+        visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
       home: TodoListPage(),
       debugShowCheckedModeBanner: false,
@@ -155,6 +158,9 @@ class _TodoListPageState extends State<TodoListPage> {
                         Navigator.of(context).pop();
                       } catch (e) {
                         print('Error adding todo: $e');
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Error adding todo: $e')),
+                        );
                       }
                     } else {
                       print('Title is required');
@@ -183,40 +189,56 @@ class _TodoListPageState extends State<TodoListPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Todo List'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.refresh),
+            onPressed: fetchTodos,
+          ),
+        ],
       ),
-      body: ListView.builder(
-        itemCount: todos.length,
-        itemBuilder: (context, index) {
-          return Card(
-            elevation: 2.0,
-            margin: EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-            child: ListTile(
-              title: Text(todos[index].title),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(todos[index].description),
-                  SizedBox(height: 4.0),
-                  Row(
-                    children: <Widget>[
-                      Text('Time: ${DateFormat.yMd().add_jm().format(todos[index].time)}'),
-                      SizedBox(width: 16.0),
-                      Text('Deadline: ${DateFormat.yMd().add_jm().format(todos[index].deadline)}'),
-                    ],
+      body: todos.isEmpty
+          ? Center(
+              child: Text(
+                'No todos yet! Create your first todo.',
+                style: TextStyle(
+                  fontSize: 18,
+                  color: Colors.black54,
+                ),
+              ),
+            )
+          : ListView.builder(
+              itemCount: todos.length,
+              itemBuilder: (context, index) {
+                return Card(
+                  elevation: 2.0,
+                  margin: EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                  child: ListTile(
+                    title: Text(todos[index].title),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(todos[index].description),
+                        SizedBox(height: 4.0),
+                        Row(
+                          children: <Widget>[
+                            Text('Time: ${DateFormat.yMd().add_jm().format(todos[index].time)}'),
+                            SizedBox(width: 16.0),
+                            Text('Deadline: ${DateFormat.yMd().add_jm().format(todos[index].deadline)}'),
+                          ],
+                        ),
+                        Text('Priority: ${todos[index].priority}'),
+                      ],
+                    ),
+                    trailing: Checkbox(
+                      value: todos[index].completed,
+                      onChanged: (bool? value) {
+                        _toggleTodoCompletion(todos[index].id, todos[index].completed);
+                      },
+                    ),
                   ),
-                  Text('Priority: ${todos[index].priority}'),
-                ],
-              ),
-              trailing: Checkbox(
-                value: todos[index].completed,
-                onChanged: (bool? value) {
-                  _toggleTodoCompletion(todos[index].id, todos[index].completed);
-                },
-              ),
+                );
+              },
             ),
-          );
-        },
-      ),
       floatingActionButton: FloatingActionButton(
         onPressed: _addTodo,
         tooltip: 'Add Todo',
