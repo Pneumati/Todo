@@ -51,101 +51,109 @@ class _TodoListPageState extends State<TodoListPage> {
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: Text('New Todo'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: _titleController,
-                decoration: InputDecoration(hintText: "Todo title"),
-              ),
-              TextField(
-                controller: _descriptionController,
-                decoration: InputDecoration(hintText: "Todo description"),
-              ),
-              SizedBox(height: 10),
-              Row(
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text('New Todo'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text("Time: ${DateFormat.yMd().add_jm().format(_selectedTime)}"),
-                  IconButton(
-                    icon: Icon(Icons.calendar_today),
-                    onPressed: () async {
-                      final DateTime? picked = await showDatePicker(
-                        context: context,
-                        initialDate: _selectedTime,
-                        firstDate: DateTime(2000),
-                        lastDate: DateTime(2101),
-                      );
-                      if (picked != null && picked != _selectedTime) {
-                        setState(() {
-                          _selectedTime = picked;
-                        });
-                      }
+                  TextField(
+                    controller: _titleController,
+                    decoration: InputDecoration(hintText: "Todo title"),
+                  ),
+                  TextField(
+                    controller: _descriptionController,
+                    decoration: InputDecoration(hintText: "Todo description"),
+                  ),
+                  SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Text("Time: ${DateFormat.yMd().add_jm().format(_selectedTime)}"),
+                      IconButton(
+                        icon: Icon(Icons.calendar_today),
+                        onPressed: () async {
+                          final DateTime? picked = await showDatePicker(
+                            context: context,
+                            initialDate: _selectedTime,
+                            firstDate: DateTime(2000),
+                            lastDate: DateTime(2101),
+                          );
+                          if (picked != null && picked != _selectedTime) {
+                            setState(() {
+                              _selectedTime = picked;
+                            });
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      Text("Deadline: ${DateFormat.yMd().add_jm().format(_selectedDeadline)}"),
+                      IconButton(
+                        icon: Icon(Icons.calendar_today),
+                        onPressed: () async {
+                          final DateTime? picked = await showDatePicker(
+                            context: context,
+                            initialDate: _selectedDeadline,
+                            firstDate: DateTime(2000),
+                            lastDate: DateTime(2101),
+                          );
+                          if (picked != null && picked != _selectedDeadline) {
+                            setState(() {
+                              _selectedDeadline = picked;
+                            });
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                  DropdownButton<String>(
+                    value: _selectedPriority,
+                    onChanged: (String? newValue) {
+                      setState(() {
+                        _selectedPriority = newValue!;
+                      });
                     },
+                    items: <String>['Low', 'Medium', 'High']
+                        .map<DropdownMenuItem<String>>((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      );
+                    }).toList(),
                   ),
                 ],
               ),
-              Row(
-                children: [
-                  Text("Deadline: ${DateFormat.yMd().add_jm().format(_selectedDeadline)}"),
-                  IconButton(
-                    icon: Icon(Icons.calendar_today),
-                    onPressed: () async {
-                      final DateTime? picked = await showDatePicker(
-                        context: context,
-                        initialDate: _selectedDeadline,
-                        firstDate: DateTime(2000),
-                        lastDate: DateTime(2101),
+              actions: <Widget>[
+                TextButton(
+                  child: Text('CANCEL'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+                TextButton(
+                  child: Text('ADD'),
+                  onPressed: () async {
+                    if (_titleController.text.isNotEmpty) {
+                      await todoService.createTodo(
+                        _titleController.text,
+                        _descriptionController.text,
+                        _selectedTime,
+                        _selectedDeadline,
+                        _selectedPriority,
                       );
-                      if (picked != null && picked != _selectedDeadline) {
-                        setState(() {
-                          _selectedDeadline = picked;
-                        });
-                      }
-                    },
-                  ),
-                ],
-              ),
-              DropdownButton<String>(
-                value: _selectedPriority,
-                onChanged: (String? newValue) {
-                  setState(() {
-                    _selectedPriority = newValue!;
-                  });
-                },
-                items: <String>['Low', 'Medium', 'High']
-                    .map<DropdownMenuItem<String>>((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value),
-                  );
-                }).toList(),
-              ),
-            ],
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: Text('CANCEL'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: Text('ADD'),
-              onPressed: () async {
-                await todoService.createTodo(
-                  _titleController.text,
-                  _descriptionController.text,
-                  _selectedTime,
-                  _selectedDeadline,
-                  _selectedPriority,
-                );
-                fetchTodos();
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
+                      fetchTodos();
+                      Navigator.of(context).pop();
+                    } else {
+                      print('Title is required');
+                    }
+                  },
+                ),
+              ],
+            );
+          },
         );
       },
     );
