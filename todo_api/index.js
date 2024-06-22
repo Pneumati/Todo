@@ -3,44 +3,52 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const mongoose = require('mongoose');
 
-// Initialize Express app
 const app = express();
-const port = 3000;
 
-// Middleware
+
 app.use(bodyParser.json());
 app.use(cors());
 
-// Connect to MongoDB
-mongoose.connect('mongodb://localhost:27017/todo', { useNewUrlParser: true, useUnifiedTopology: true });
+mongoose.connect('mongodb://localhost:27017/todo_app', { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log('MongoDB connected'))
+  .catch(err => console.log(err));
 
-// Todo Schema
-const todoSchema = new mongoose.Schema({
-    title: String,
-    description: String,
-    time: Date,
-    completed: Boolean
-});
 
-const Todo = mongoose.model('Todo', todoSchema);
+const Todo = mongoose.model('Todo', new mongoose.Schema({
+  title: String,
+  description: String,
+  time: Date,
+  deadline: Date,
+  priority: String,
+  completed: Boolean,
+}));
 
-// Endpoints
-app.post('/todos', async (req, res) => {
-    const todo = new Todo({
-        title: req.body.title,
-        description: req.body.description,
-        time: req.body.time,
-        completed: false
-    });
-    await todo.save();
-    res.send(todo);
-});
 
 app.get('/todos', async (req, res) => {
-    const todos = await Todo.find();
-    res.send(todos);
+  const todos = await Todo.find();
+  res.json(todos);
 });
 
-app.listen(port, () => {
-    console.log(`Server running at http://localhost:${port}`);
+app.post('/todos', async (req, res) => {
+  const { title, description, time, deadline, priority } = req.body;
+  const todo = new Todo({
+    title,
+    description,
+    time,
+    deadline,
+    priority,
+    completed: false,
+  });
+  await todo.save();
+  res.json(todo);
 });
+
+app.put('/todos/:id', async (req, res) => {
+  const { id } = req.params;
+  const { completed } = req.body;
+  const todo = await Todo.findByIdAndUpdate(id, { completed }, { new: true });
+  res.json(todo);
+});
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

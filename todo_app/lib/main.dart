@@ -37,8 +37,12 @@ class _TodoListPageState extends State<TodoListPage> {
   }
 
   Future<void> fetchTodos() async {
-    todos = await todoService.getTodos();
-    setState(() {});
+    try {
+      todos = await todoService.getTodos();
+      setState(() {});
+    } catch (e) {
+      print('Error fetching todos: $e');
+    }
   }
 
   Future<void> _addTodo() async {
@@ -55,76 +59,78 @@ class _TodoListPageState extends State<TodoListPage> {
           builder: (context, setState) {
             return AlertDialog(
               title: Text('New Todo'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: _titleController,
-                    decoration: InputDecoration(hintText: "Todo title"),
-                  ),
-                  TextField(
-                    controller: _descriptionController,
-                    decoration: InputDecoration(hintText: "Todo description"),
-                  ),
-                  SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Text("Time: ${DateFormat.yMd().add_jm().format(_selectedTime)}"),
-                      IconButton(
-                        icon: Icon(Icons.calendar_today),
-                        onPressed: () async {
-                          final DateTime? picked = await showDatePicker(
-                            context: context,
-                            initialDate: _selectedTime,
-                            firstDate: DateTime(2000),
-                            lastDate: DateTime(2101),
-                          );
-                          if (picked != null && picked != _selectedTime) {
-                            setState(() {
-                              _selectedTime = picked;
-                            });
-                          }
-                        },
-                      ),
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      Text("Deadline: ${DateFormat.yMd().add_jm().format(_selectedDeadline)}"),
-                      IconButton(
-                        icon: Icon(Icons.calendar_today),
-                        onPressed: () async {
-                          final DateTime? picked = await showDatePicker(
-                            context: context,
-                            initialDate: _selectedDeadline,
-                            firstDate: DateTime(2000),
-                            lastDate: DateTime(2101),
-                          );
-                          if (picked != null && picked != _selectedDeadline) {
-                            setState(() {
-                              _selectedDeadline = picked;
-                            });
-                          }
-                        },
-                      ),
-                    ],
-                  ),
-                  DropdownButton<String>(
-                    value: _selectedPriority,
-                    onChanged: (String? newValue) {
-                      setState(() {
-                        _selectedPriority = newValue!;
-                      });
-                    },
-                    items: <String>['Low', 'Medium', 'High']
-                        .map<DropdownMenuItem<String>>((String value) {
-                      return DropdownMenuItem<String>(
-                        value: value,
-                        child: Text(value),
-                      );
-                    }).toList(),
-                  ),
-                ],
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: _titleController,
+                      decoration: InputDecoration(hintText: "Todo title"),
+                    ),
+                    TextField(
+                      controller: _descriptionController,
+                      decoration: InputDecoration(hintText: "Todo description"),
+                    ),
+                    SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Text("Time: ${DateFormat.yMd().add_jm().format(_selectedTime)}"),
+                        IconButton(
+                          icon: Icon(Icons.calendar_today),
+                          onPressed: () async {
+                            final DateTime? picked = await showDatePicker(
+                              context: context,
+                              initialDate: _selectedTime,
+                              firstDate: DateTime(2000),
+                              lastDate: DateTime(2101),
+                            );
+                            if (picked != null && picked != _selectedTime) {
+                              setState(() {
+                                _selectedTime = picked;
+                              });
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        Text("Deadline: ${DateFormat.yMd().add_jm().format(_selectedDeadline)}"),
+                        IconButton(
+                          icon: Icon(Icons.calendar_today),
+                          onPressed: () async {
+                            final DateTime? picked = await showDatePicker(
+                              context: context,
+                              initialDate: _selectedDeadline,
+                              firstDate: DateTime(2000),
+                              lastDate: DateTime(2101),
+                            );
+                            if (picked != null && picked != _selectedDeadline) {
+                              setState(() {
+                                _selectedDeadline = picked;
+                              });
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                    DropdownButton<String>(
+                      value: _selectedPriority,
+                      onChanged: (String? newValue) {
+                        setState(() {
+                          _selectedPriority = newValue!;
+                        });
+                      },
+                      items: <String>['Low', 'Medium', 'High']
+                          .map<DropdownMenuItem<String>>((String value) {
+                        return DropdownMenuItem<String>(
+                          value: value,
+                          child: Text(value),
+                        );
+                      }).toList(),
+                    ),
+                  ],
+                ),
               ),
               actions: <Widget>[
                 TextButton(
@@ -137,15 +143,19 @@ class _TodoListPageState extends State<TodoListPage> {
                   child: Text('ADD'),
                   onPressed: () async {
                     if (_titleController.text.isNotEmpty) {
-                      await todoService.createTodo(
-                        _titleController.text,
-                        _descriptionController.text,
-                        _selectedTime,
-                        _selectedDeadline,
-                        _selectedPriority,
-                      );
-                      fetchTodos();
-                      Navigator.of(context).pop();
+                      try {
+                        await todoService.createTodo(
+                          _titleController.text,
+                          _descriptionController.text,
+                          _selectedTime,
+                          _selectedDeadline,
+                          _selectedPriority,
+                        );
+                        fetchTodos();
+                        Navigator.of(context).pop();
+                      } catch (e) {
+                        print('Error adding todo: $e');
+                      }
                     } else {
                       print('Title is required');
                     }
@@ -160,8 +170,12 @@ class _TodoListPageState extends State<TodoListPage> {
   }
 
   Future<void> _toggleTodoCompletion(String id, bool completed) async {
-    await todoService.updateTodoStatus(id, !completed);
-    fetchTodos();
+    try {
+      await todoService.updateTodoStatus(id, !completed);
+      fetchTodos();
+    } catch (e) {
+      print('Error updating todo status: $e');
+    }
   }
 
   @override
